@@ -44,9 +44,9 @@ import getPoint from './get-point.js';
     renderFilters(filterItems);
   };
 
-  const renderPoints = () => {
+  const renderPoints = (isFirst) => {
     const pointsBlock = document.querySelector(`.trip-day__items`);
-    const count = getRandomIntegerFromRange(pointsCount.min, pointsCount.max);
+    const count = (isFirst) ? pointsCount.default : getRandomIntegerFromRange(pointsCount.min, pointsCount.max);
     let pointsHtml = ``;
 
     for (let i = 1; i <= count; i++) {
@@ -58,5 +58,5 @@ import getPoint from './get-point.js';
   };
 
   initFilters(renderPoints);
-  renderPoints();
+  renderPoints(true);
 })();
