@@ -1,5 +1,6 @@
 import getFilter from './get-filter.js';
 import getPoint from './get-point.js';
+import insertHtml from './insert-elements-from-html.js';
 
 (function initPage() {
   const pointsCount = {
@@ -37,7 +38,7 @@ import getPoint from './get-point.js';
       }).join(``);
 
       filterBlock.innerHTML = ``;
-      filterBlock.insertAdjacentHTML(`afterBegin`, filtersHtml);
+      insertHtml(filterBlock, filtersHtml);
       filterBlock.addEventListener(`change`, onFilterChange);
     };
 
@@ -54,7 +55,7 @@ import getPoint from './get-point.js';
     }
 
     pointsBlock.innerHTML = ``;
-    pointsBlock.insertAdjacentHTML(`afterBegin`, pointsHtml);
+    insertHtml(pointsBlock, pointsHtml);
   };
 
   initFilters(renderPoints);
