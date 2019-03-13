@@ -170,22 +170,22 @@ class PointEdit {
 
   render() {
     this._element = utils.createElement(this.template);
-    this.listen();
+    this.bind();
 
     return this._element;
   }
 
   unrender() {
-    this.unlisten();
+    this.unbind();
     this._element = null;
   }
 
-  listen() {
+  bind() {
     this._element.querySelector(`form`).addEventListener(`submit`, this._onSubmit.bind(this));
     this._element.querySelector(`[type="reset"]`).addEventListener(`click`, this._onReset.bind(this));
   }
 
-  unlisten() {
+  unbind() {
     this._element.querySelector(`form`).removeEventListener(`submit`, this._onSubmit.bind(this));
     this._element.querySelector(`[type="reset"]`).removeEventListener(`click`, this._onReset);
   }

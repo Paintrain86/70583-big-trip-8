@@ -60,21 +60,21 @@ class Point {
 
   render() {
     this._element = utils.createElement(this.template);
-    this.listen();
+    this.bind();
 
     return this._element;
   }
 
   unrender() {
-    this.unlisten();
+    this.unbind();
     this._element = null;
   }
 
-  listen() {
+  bind() {
     this._element.addEventListener(`click`, this._onEdit.bind(this));
   }
 
-  unlisten() {
+  unbind() {
     this._element.removeEventListener(`click`, this._onEdit);
   }
 }

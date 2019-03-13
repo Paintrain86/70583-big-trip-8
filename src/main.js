@@ -51,16 +51,7 @@ const renderPoints = (isFirst) => {
   const count = (isFirst) ? pointsCount.default : utils.getRandomInteger(pointsCount.min, pointsCount.max);
   const points = getObjects(count);
 
-  const createAllPoints = () => {
-    for (let pointObject of points) {
-      renderPoint(pointObject);
-    }
-  };
-
-  pointsBlock.innerHTML = ``;
-  createAllPoints();
-
-  function renderPoint(object) {
+  const renderSinglePoint = (object) => {
     const point = new Point(object);
     const pointEdit = new PointEdit(object);
 
@@ -83,7 +74,16 @@ const renderPoints = (isFirst) => {
     };
 
     pointsBlock.appendChild(point.render());
-  }
+  };
+
+  const createAllPoints = () => {
+    for (let pointObject of points) {
+      renderSinglePoint(pointObject);
+    }
+  };
+
+  pointsBlock.innerHTML = ``;
+  createAllPoints();
 };
 
 const setPageTitle = () => {
