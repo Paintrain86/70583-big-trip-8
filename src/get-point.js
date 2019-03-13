@@ -1,35 +1,83 @@
-const getOffers = (offers) => {
-  const offersHtml = offers.map((offer) => `
-  <li>
-    <button class="trip-point__offer">${offer.name} +&euro;&nbsp;${offer.price}</button>
-  </li>`).join(``);
+import utils from './util.js';
 
-  return (offersHtml === ``) ? offersHtml : `<ul class="trip-point__offers">${offersHtml}</ul>`;
-};
+class Point {
+  constructor(object) {
+    this._type = object.type;
+    this._timeStart = object.timeStart;
+    this._timeEnd = object.timeEnd;
+    this._price = object.price;
+    this._sights = object.sights;
+    this._pictures = object.pictures;
+    this._offersSelected = object.offersSelected;
+    this._icons = object.icons;
+    this._iconSelected = object.icons.get(object.type);
 
-const getTwoDigitsMinutes = (num) => (num > 9) ? `${num}` : `0${num}`;
+    this._element = null;
 
-const getHoursAndMinutes = (date) => `${getTwoDigitsMinutes(date.getHours())}:${getTwoDigitsMinutes(date.getMinutes())}`;
-const getTimeDifference = (dateStart, dateEnd) => {
-  const timestampDiff = dateEnd.getTime() - dateStart.getTime();
-  const daysDiff = Math.floor(timestampDiff / (24 * 60 * 60 * 1000));
-  const hoursDiff = Math.floor((timestampDiff - daysDiff * 24 * 60 * 60 * 1000) / (60 * 60 * 1000));
-  const minutesDiff = Math.floor((timestampDiff - daysDiff * 24 * 60 * 60 * 1000 - hoursDiff * 60 * 60 * 1000) / (60 * 1000));
+    this._onEdit = null;
+  }
 
-  return `${(daysDiff > 0) ? `${daysDiff}d ` : ``}${hoursDiff}h ${minutesDiff}m`;
-};
+  _onEdit(e) {
+    e.preventDefault();
 
-const getPoint = (object) => `
-  <article class="trip-point">
-    <i class="trip-icon">${object.icon}</i>
-    <h3 class="trip-point__title">${object.type} to Airport</h3>
-    <p class="trip-point__schedule">
-      <span class="trip-point__timetable">${getHoursAndMinutes(object.timeStart)}&nbsp;&mdash; ${getHoursAndMinutes(object.timeEnd)}</span>
-      <span class="trip-point__duration">${getTimeDifference(object.timeStart, object.timeEnd)}</span>
-    </p>
-    <p class="trip-point__price">&euro;&nbsp;${object.price}</p>
-    ${getOffers(object.offers)}
-  </article>
-`;
+    if (typeof this._onEdit === `function`) {
+      this._onEdit();
+    }
+  }
 
-export default getPoint;
+  get offersHtml() {
+    const offersHtml = this._offersSelected.map((offer) => `
+    <li>
+      <button class="trip-point__offer">${offer.displayName} +&euro;&nbsp;${offer.price}</button>
+    </li>`).join(``);
+
+    return (offersHtml === ``) ? offersHtml : `<ul class="trip-point__offers">${offersHtml}</ul>`;
+  }
+
+  get template() {
+    return `
+      <article class="trip-point">
+        <i class="trip-icon">${this._iconSelected}</i>
+        <h3 class="trip-point__title">${this._type} to Airport</h3>
+        <p class="trip-point__schedule">
+          <span class="trip-point__timetable">${utils.getHoursAndMinutes(this._timeStart)}&nbsp;&mdash; ${utils.getHoursAndMinutes(this._timeEnd)}</span>
+          <span class="trip-point__duration">${utils.getTimeDifference(this._timeStart, this._timeEnd)}</span>
+        </p>
+        <p class="trip-point__price">&euro;&nbsp;${this._price}</p>
+        ${this.offersHtml}
+      </article>
+    `;
+  }
+
+
+  get element() {
+    return this._element;
+  }
+
+  set onEdit(cb) {
+    this._onEdit = cb;
+  }
+
+  render() {
+    this._element = utils.createElement(this.template);
+    this.bind();
+
+    return this._element;
+  }
+
+  unrender() {
+    this.unbind();
+    this._element = null;
+  }
+
+  bind() {
+    this._element.addEventListener(`click`, this._onEdit.bind(this));
+  }
+
+  unbind() {
+    this._element.removeEventListener(`click`, this._onEdit);
+  }
+}
+
+
+export default Point;

@@ -1,7 +1,10 @@
+import utils from './util.js';
 import getFilter from './get-filter.js';
 import getObjects from './get-objects.js';
-import getPoint from './get-point.js';
-import utils from './util.js';
+import Point from './get-point.js';
+import PointEdit from './get-point-edit.js';
+
+window.wayDestinations = [`Bologoe`, `Ulan-Ude`, `San-Francisco`, `Tyumen`, `Tegeran`];
 
 const pointsCount = {
   min: 0,
@@ -46,13 +49,57 @@ const initFilters = (onChange) => {
 const renderPoints = (isFirst) => {
   const pointsBlock = document.querySelector(`.trip-day__items`);
   const count = (isFirst) ? pointsCount.default : utils.getRandomInteger(pointsCount.min, pointsCount.max);
-  const objects = getObjects(count);
+  const points = getObjects(count);
 
-  const pointsHtml = objects.map((object) => getPoint(object)).join(``);
+  const renderSinglePoint = (object) => {
+    const point = new Point(object);
+    const pointEdit = new PointEdit(object);
+
+    point.onEdit = () => {
+      pointEdit.render();
+      pointsBlock.replaceChild(pointEdit.element, point.element);
+      point.unrender();
+    };
+
+    pointEdit.onReset = () => {
+      point.render();
+      pointsBlock.replaceChild(point.element, pointEdit.element);
+      pointEdit.unrender();
+    };
+
+    pointEdit.onSubmit = () => {
+      point.render();
+      pointsBlock.replaceChild(point.element, pointEdit.element);
+      pointEdit.unrender();
+    };
+
+    pointsBlock.appendChild(point.render());
+  };
+
+  const createAllPoints = () => {
+    for (let pointObject of points) {
+      renderSinglePoint(pointObject);
+    }
+  };
 
   pointsBlock.innerHTML = ``;
-  utils.insertElements(pointsBlock, pointsHtml);
+  createAllPoints();
 };
 
+const setPageTitle = () => {
+  const title = document.querySelector(`.trip__points`);
+
+  const getNewTitleHtml = () => {
+    return window.wayDestinations.map((dest, i) => {
+      return (i === 0) ? `${dest}` : `&nbsp;&mdash; ${dest}`;
+    }).join(``);
+  };
+
+  const newTitleHtml = `<h1 class="trip__points">${getNewTitleHtml()}</h1>`;
+
+  title.parentNode.replaceChild(utils.createElement(newTitleHtml), title);
+};
+
+setPageTitle();
 initFilters(renderPoints);
 renderPoints(true);
