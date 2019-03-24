@@ -109,7 +109,7 @@ class PointEdit extends PointComponent {
             <input class="point__destination-input" list="destination-select" id="destination" value="${this._destinationPoint}" name="destination">
             <datalist id="destination-select">
               <option value="airport"></option>
-              ${window.wayDestinations.map((dest) => `<option value="${dest}" ${(dest === this._destinationPoint) ? `checked` : ``}></option>`).join(``)}
+              ${window.wayDestinations.map((dest) => `<option value="${dest}" ${(dest === this._destinationPoint) ? `selected` : ``}></option>`).join(``)}
               <option value="hotel"></option>
             </datalist>
           </div>
