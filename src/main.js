@@ -1,8 +1,8 @@
 import utils from './util.js';
 import getFilter from './get-filter.js';
 import getObjects from './get-objects.js';
-import Point from './get-point.js';
-import PointEdit from './get-point-edit.js';
+import Point from './point.js';
+import PointEdit from './point-edit.js';
 
 window.wayDestinations = [`Bologoe`, `Ulan-Ude`, `San-Francisco`, `Tyumen`, `Tegeran`];
 
@@ -52,6 +52,8 @@ const renderPoints = (isFirst) => {
   const points = getObjects(count);
 
   const renderSinglePoint = (object) => {
+    object.destinationPoint = utils.getRandomFromArray(window.wayDestinations);
+
     const point = new Point(object);
     const pointEdit = new PointEdit(object);
 

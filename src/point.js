@@ -1,8 +1,11 @@
 import utils from './util.js';
+import PointComponent from './point-component.js';
 
-class Point {
+class Point extends PointComponent {
   constructor(object) {
+    super();
     this._type = object.type;
+    this._destinationPoint = object.destinationPoint;
     this._timeStart = object.timeStart;
     this._timeEnd = object.timeEnd;
     this._price = object.price;
@@ -15,9 +18,10 @@ class Point {
     this._element = null;
 
     this._onEdit = null;
+    this._onEditBtnClick = this._onEditBtnClick.bind(this);
   }
 
-  _onEdit(e) {
+  _onEditBtnClick(e) {
     e.preventDefault();
 
     if (typeof this._onEdit === `function`) {
@@ -38,7 +42,7 @@ class Point {
     return `
       <article class="trip-point">
         <i class="trip-icon">${this._iconSelected}</i>
-        <h3 class="trip-point__title">${this._type} to Airport</h3>
+        <h3 class="trip-point__title">${this._type} to ${this._destinationPoint}</h3>
         <p class="trip-point__schedule">
           <span class="trip-point__timetable">${utils.getHoursAndMinutes(this._timeStart)}&nbsp;&mdash; ${utils.getHoursAndMinutes(this._timeEnd)}</span>
           <span class="trip-point__duration">${utils.getTimeDifference(this._timeStart, this._timeEnd)}</span>
@@ -49,33 +53,16 @@ class Point {
     `;
   }
 
-
-  get element() {
-    return this._element;
-  }
-
   set onEdit(cb) {
     this._onEdit = cb;
   }
 
-  render() {
-    this._element = utils.createElement(this.template);
-    this.bind();
-
-    return this._element;
-  }
-
-  unrender() {
-    this.unbind();
-    this._element = null;
-  }
-
   bind() {
-    this._element.addEventListener(`click`, this._onEdit.bind(this));
+    this._element.addEventListener(`click`, this._onEditBtnClick);
   }
 
   unbind() {
-    this._element.removeEventListener(`click`, this._onEdit);
+    this._element.removeEventListener(`click`, this._onEditBtnClick);
   }
 }
 

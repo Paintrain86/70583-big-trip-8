@@ -1,8 +1,10 @@
-import utils from './util.js';
+import PointComponent from './point-component.js';
 
-class PointEdit {
+class PointEdit extends PointComponent {
   constructor(object) {
+    super();
     this._type = object.type;
+    this._destinationPoint = object.destinationPoint;
     this._timeStart = object.timeStart;
     this._timeEnd = object.timeEnd;
     this._price = object.price;
@@ -17,9 +19,12 @@ class PointEdit {
 
     this._onSubmit = null;
     this._onReset = null;
+
+    this._onSubmitBtnClick = this._onSubmitBtnClick.bind(this);
+    this._onResetBtnClick = this._onResetBtnClick.bind(this);
   }
 
-  _onSubmit(e) {
+  _onSubmitBtnClick(e) {
     e.preventDefault();
 
     if (typeof this._onSubmit === `function`) {
@@ -27,7 +32,7 @@ class PointEdit {
     }
   }
 
-  _onReset(e) {
+  _onResetBtnClick(e) {
     e.preventDefault();
 
     if (typeof this._onReset === `function`) {
@@ -100,11 +105,11 @@ class PointEdit {
           </div>
 
           <div class="point__destination-wrap">
-            <label class="point__destination-label" for="destination">Flight to</label>
-            <input class="point__destination-input" list="destination-select" id="destination" value="${window.wayDestinations[0]}" name="destination">
+            <label class="point__destination-label" for="destination">${this._type} to</label>
+            <input class="point__destination-input" list="destination-select" id="destination" value="${this._destinationPoint}" name="destination">
             <datalist id="destination-select">
               <option value="airport"></option>
-              ${window.wayDestinations.map((dest) => `<option value="${dest}"></option>`).join(``)}
+              ${window.wayDestinations.map((dest) => `<option value="${dest}" ${(dest === this._destinationPoint) ? `selected` : ``}></option>`).join(``)}
               <option value="hotel"></option>
             </datalist>
           </div>
@@ -156,10 +161,6 @@ class PointEdit {
     `;
   }
 
-  get element() {
-    return this._element;
-  }
-
   set onSubmit(cb) {
     this._onSubmit = cb;
   }
@@ -168,26 +169,14 @@ class PointEdit {
     this._onReset = cb;
   }
 
-  render() {
-    this._element = utils.createElement(this.template);
-    this.bind();
-
-    return this._element;
-  }
-
-  unrender() {
-    this.unbind();
-    this._element = null;
-  }
-
   bind() {
-    this._element.querySelector(`form`).addEventListener(`submit`, this._onSubmit.bind(this));
-    this._element.querySelector(`[type="reset"]`).addEventListener(`click`, this._onReset.bind(this));
+    this._element.querySelector(`form`).addEventListener(`submit`, this._onSubmitBtnClick);
+    this._element.querySelector(`button[type="reset"]`).addEventListener(`click`, this._onResetBtnClick);
   }
 
   unbind() {
-    this._element.querySelector(`form`).removeEventListener(`submit`, this._onSubmit.bind(this));
-    this._element.querySelector(`[type="reset"]`).removeEventListener(`click`, this._onReset);
+    this._element.querySelector(`form`).removeEventListener(`submit`, this._onSubmitBtnClick);
+    this._element.querySelector(`button[type="reset"]`).removeEventListener(`click`, this._onResetBtnClick);
   }
 }
 
