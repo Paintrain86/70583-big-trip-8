@@ -69,7 +69,12 @@ const renderPoints = (isFirst) => {
       pointEdit.unrender();
     };
 
-    pointEdit.onSubmit = () => {
+    pointEdit.onSubmit = (newObject) => {
+      object.destinationPoint = newObject.destinationPoint;
+      object.price = newObject.price;
+      object.offersSelected = newObject.offersSelected;
+
+      point.update(object);
       point.render();
       pointsBlock.replaceChild(point.element, pointEdit.element);
       pointEdit.unrender();

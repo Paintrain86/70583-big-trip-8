@@ -18,7 +18,7 @@ const iconsMap = new Map([
 const ranges = {
   offers: {
     min: 0,
-    max: 2
+    max: 3
   },
   sights: {
     min: 1,

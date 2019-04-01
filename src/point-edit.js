@@ -1,3 +1,5 @@
+import moment from 'moment';
+import utils from './util.js';
 import PointComponent from './point-component.js';
 
 class PointEdit extends PointComponent {
@@ -27,9 +29,13 @@ class PointEdit extends PointComponent {
   _onSubmitBtnClick(e) {
     e.preventDefault();
 
+    const changedData = this._getSubmitData();
+
     if (typeof this._onSubmit === `function`) {
-      this._onSubmit();
+      this._onSubmit(changedData);
     }
+
+    this.update(changedData);
   }
 
   _onResetBtnClick(e) {
@@ -40,14 +46,23 @@ class PointEdit extends PointComponent {
     }
   }
 
-  get fullPrice() {
-    let price = this._price;
+  _getSubmitData() {
+    const formData = new FormData(this._element.querySelector(`form`));
+    const allOffers = this._offers;
 
-    this._offersSelected.forEach((offer) => {
-      price += offer.price;
-    });
+    const getSelectedOffers = (data) => {
+      const offers = data.getAll(`offer`);
 
-    return price;
+      return allOffers.filter((item) => {
+        return offers.indexOf(item.id) > -1;
+      });
+    };
+
+    return {
+      destinationPoint: formData.get(`destination`),
+      price: Number(formData.get(`price`)),
+      offersSelected: getSelectedOffers(formData)
+    };
   }
 
   get offersHtml() {
@@ -91,7 +106,7 @@ class PointEdit extends PointComponent {
         <header class="point__header">
           <label class="point__date">
             choose day
-            <input class="point__input" type="text" placeholder="MAR 18" name="day">
+            <input class="point__input" type="text" placeholder="MAR 18" name="day" value="${moment(this._timeStart).format(`MMM DD`)}">
           </label>
 
           <div class="travel-way">
@@ -116,13 +131,13 @@ class PointEdit extends PointComponent {
 
           <label class="point__time">
             choose time
-            <input class="point__input" type="text" value="00:00 — 00:00" name="time" placeholder="00:00 — 00:00">
+            <input class="point__input" type="text" value="${utils.getHoursAndMinutes(this._timeStart)} - ${utils.getHoursAndMinutes(this._timeEnd)}" name="time" placeholder="00:00 — 00:00">
           </label>
 
           <label class="point__price">
             write price
             <span class="point__price-currency">€</span>
-            <input class="point__input" type="text" value="${this.fullPrice}" name="price">
+            <input class="point__input" type="text" value="${this._price}" name="price">
           </label>
 
           <div class="point__buttons">
@@ -172,11 +187,20 @@ class PointEdit extends PointComponent {
   bind() {
     this._element.querySelector(`form`).addEventListener(`submit`, this._onSubmitBtnClick);
     this._element.querySelector(`button[type="reset"]`).addEventListener(`click`, this._onResetBtnClick);
+
+    /*  flatpickr(this._element.querySelector(`.point__date .point_input`), {altInput: true, altFormat: `j F`, dateFormat: `Y-m-d`, defaultDate: this._timeStart});
+    flatpickr(this._element.querySelector(`.point__time`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeStart});*/
   }
 
   unbind() {
     this._element.querySelector(`form`).removeEventListener(`submit`, this._onSubmitBtnClick);
     this._element.querySelector(`button[type="reset"]`).removeEventListener(`click`, this._onResetBtnClick);
+  }
+
+  update(data) {
+    this._destinationPoint = data.destinationPoint;
+    this._price = data.price;
+    this._offersSelected = data.offersSelected;
   }
 }
 
