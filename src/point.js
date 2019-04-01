@@ -38,6 +38,16 @@ class Point extends PointComponent {
     return (offersHtml === ``) ? offersHtml : `<ul class="trip-point__offers">${offersHtml}</ul>`;
   }
 
+  get offersPrice() {
+    if (this._offersSelected.length === 0) {
+      return 0;
+    }
+
+    return this._offersSelected.reduce((acc, offer) => {
+      return {price: acc.price + offer.price};
+    }).price;
+  }
+
   get template() {
     return `
       <article class="trip-point">
@@ -47,7 +57,7 @@ class Point extends PointComponent {
           <span class="trip-point__timetable">${utils.getHoursAndMinutes(this._timeStart)}&nbsp;&mdash; ${utils.getHoursAndMinutes(this._timeEnd)}</span>
           <span class="trip-point__duration">${utils.getTimeDifference(this._timeStart, this._timeEnd)}</span>
         </p>
-        <p class="trip-point__price">&euro;&nbsp;${this._price}</p>
+        <p class="trip-point__price">&euro;&nbsp;${this._price + this.offersPrice}</p>
         ${this.offersHtml}
       </article>
     `;
@@ -63,6 +73,12 @@ class Point extends PointComponent {
 
   unbind() {
     this._element.removeEventListener(`click`, this._onEditBtnClick);
+  }
+
+  update(data) {
+    this._price = data.price;
+    this._destinationPoint = data.destinationPoint;
+    this._offersSelected = data.offersSelected;
   }
 }
 
