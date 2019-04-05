@@ -13,7 +13,6 @@ class Point extends PointComponent {
     this._pictures = object.pictures;
     this._offersSelected = object.offersSelected;
     this._icons = object.icons;
-    this._iconSelected = object.icons.get(object.type);
 
     this._element = null;
 
@@ -51,7 +50,7 @@ class Point extends PointComponent {
   get template() {
     return `
       <article class="trip-point">
-        <i class="trip-icon">${this._iconSelected}</i>
+        <i class="trip-icon">${this._icons.get(this._type)}</i>
         <h3 class="trip-point__title">${this._type} to ${this._destinationPoint}</h3>
         <p class="trip-point__schedule">
           <span class="trip-point__timetable">${utils.getHoursAndMinutes(this._timeStart)}&nbsp;&mdash; ${utils.getHoursAndMinutes(this._timeEnd)}</span>
@@ -76,8 +75,9 @@ class Point extends PointComponent {
   }
 
   update(data) {
-    this._price = data.price;
+    this._type = data.type;
     this._destinationPoint = data.destinationPoint;
+    this._price = data.price;
     this._offersSelected = data.offersSelected;
   }
 }
