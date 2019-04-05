@@ -51,7 +51,7 @@ const renderPoints = (isFirst) => {
   const count = (isFirst) ? pointsCount.default : utils.getRandomInteger(pointsCount.min, pointsCount.max);
   const points = getObjects(count);
 
-  const renderSinglePoint = (object) => {
+  const renderSinglePoint = (object, index) => {
     object.destinationPoint = utils.getRandomFromArray(window.wayDestinations);
 
     const point = new Point(object);
@@ -76,12 +76,7 @@ const renderPoints = (isFirst) => {
     };
 
     pointEdit.onSubmit = (newObject) => {
-      object.type = newObject.type;
-      object.destinationPoint = newObject.destinationPoint;
-      object.price = newObject.price;
-      object.offersSelected = newObject.offersSelected;
-
-      point.update(object);
+      point.update(updatePoint(newObject, index));
       point.render();
       pointsBlock.replaceChild(point.element, pointEdit.element);
       pointEdit.unrender();
@@ -90,13 +85,20 @@ const renderPoints = (isFirst) => {
     pointsBlock.appendChild(point.render());
   };
 
+  const updatePoint = (newObject, i) => {
+    points[i] = Object.assign({}, points[i], newObject);
+
+    return points[i];
+  };
+
   const createAllPoints = () => {
-    for (let pointObject of points) {
-      renderSinglePoint(pointObject);
+    pointsBlock.innerHTML = ``;
+
+    for (let i = 0; i < points.length; i++) {
+      renderSinglePoint(points[i], i);
     }
   };
 
-  pointsBlock.innerHTML = ``;
   createAllPoints();
 };
 
