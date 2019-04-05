@@ -51,7 +51,13 @@ const renderPoints = (isFirst) => {
   const count = (isFirst) ? pointsCount.default : utils.getRandomInteger(pointsCount.min, pointsCount.max);
   const points = getObjects(count);
 
-  const renderSinglePoint = (object, index) => {
+  const renderSinglePoint = (index) => {
+    let object = points[index];
+
+    if (!object) {
+      return;
+    }
+
     object.destinationPoint = utils.getRandomFromArray(window.wayDestinations);
 
     const point = new Point(object);
@@ -70,9 +76,9 @@ const renderPoints = (isFirst) => {
     };
 
     pointEdit.onDelete = () => {
-      point.render();
-      pointsBlock.replaceChild(point.element, pointEdit.element);
+      pointsBlock.removeChild(pointEdit.element);
       pointEdit.unrender();
+      points[index] = null;
     };
 
     pointEdit.onSubmit = (newObject) => {
@@ -95,7 +101,7 @@ const renderPoints = (isFirst) => {
     pointsBlock.innerHTML = ``;
 
     for (let i = 0; i < points.length; i++) {
-      renderSinglePoint(points[i], i);
+      renderSinglePoint(i);
     }
   };
 
