@@ -6,31 +6,38 @@ import PointEdit from './point-edit.js';
 
 window.wayDestinations = [`Bologoe`, `Ulan-Ude`, `San-Francisco`, `Tyumen`, `Tegeran`];
 
-const pointsCount = {
-  min: 0,
-  max: 10,
-  default: 7
-};
+const pointsCount = 10;
+const points = getObjects(pointsCount);
 
 const initFilters = (onChange) => {
-  const filterItems = [
-    {
-      name: `everything`,
-      isChecked: true
-    },
-    {
-      name: `future`
-    },
-    {
-      name: `past`
-    }
-  ];
+  const filterItems = [{
+    name: `everything`,
+    isChecked: true
+  },
+  {
+    name: `future`
+  },
+  {
+    name: `past`
+  }];
   const filterBlock = document.querySelector(`.trip-filter`);
 
   const onFilterChange = (e) => {
     e.preventDefault();
+    let filteredPoints = [];
 
-    onChange();
+    switch (e.target.value) {
+      case `future`:
+        filteredPoints = points.filter((point) => point && Date.now() < point.timeStart.getTime());
+        break;
+      case `past`:
+        filteredPoints = points.filter((point) => point && Date.now() >= point.timeStart.getTime());
+        break;
+      default:
+        filteredPoints = points;
+    }
+
+    onChange(filteredPoints);
   };
 
   const renderFilters = (filters) => {
@@ -46,13 +53,11 @@ const initFilters = (onChange) => {
   renderFilters(filterItems);
 };
 
-const renderPoints = (isFirst) => {
+const renderPoints = (pointsArr) => {
   const pointsBlock = document.querySelector(`.trip-day__items`);
-  const count = (isFirst) ? pointsCount.default : utils.getRandomInteger(pointsCount.min, pointsCount.max);
-  const points = getObjects(count);
 
   const renderSinglePoint = (index) => {
-    let object = points[index];
+    let object = pointsArr[index];
 
     if (!object) {
       return;
@@ -78,7 +83,7 @@ const renderPoints = (isFirst) => {
     pointEdit.onDelete = () => {
       pointsBlock.removeChild(pointEdit.element);
       pointEdit.unrender();
-      points[index] = null;
+      pointsArr[index] = null;
     };
 
     pointEdit.onSubmit = (newObject) => {
@@ -92,20 +97,16 @@ const renderPoints = (isFirst) => {
   };
 
   const updatePoint = (newObject, i) => {
-    points[i] = Object.assign({}, points[i], newObject);
+    pointsArr[i] = Object.assign({}, pointsArr[i], newObject);
 
-    return points[i];
+    return pointsArr[i];
   };
 
-  const createAllPoints = () => {
-    pointsBlock.innerHTML = ``;
+  pointsBlock.innerHTML = ``;
 
-    for (let i = 0; i < points.length; i++) {
-      renderSinglePoint(i);
-    }
-  };
-
-  createAllPoints();
+  for (let i = 0; i < pointsArr.length; i++) {
+    renderSinglePoint(i);
+  }
 };
 
 const setPageTitle = () => {
@@ -124,4 +125,4 @@ const setPageTitle = () => {
 
 setPageTitle();
 initFilters(renderPoints);
-renderPoints(true);
+renderPoints(points);
