@@ -1,5 +1,5 @@
 import BaseComponent from './base-component.js';
-import Chart from 'chart.js'
+import Chart from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 class Stats extends BaseComponent {
