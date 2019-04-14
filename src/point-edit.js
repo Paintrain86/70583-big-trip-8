@@ -1,8 +1,8 @@
 import moment from 'moment';
 import utils from './util.js';
-import PointComponent from './point-component.js';
+import BaseComponent from './base-component.js';
 
-class PointEdit extends PointComponent {
+class PointEdit extends BaseComponent {
   constructor(object) {
     super();
     this._type = object.type;

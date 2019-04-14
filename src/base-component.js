@@ -1,9 +1,9 @@
 import utils from './util.js';
 
-class PointComponent {
+class BaseComponent {
   constructor() {
-    if (new.target === PointComponent) {
-      throw new Error(`Can't create an instance of PointComponent. You can only extend your classes with it.`);
+    if (new.target === BaseComponent) {
+      throw new Error(`Can't create an instance of BaseComponent. You can only extend your classes with it.`);
     }
 
     this._element = null;
@@ -35,4 +35,4 @@ class PointComponent {
   }
 }
 
-export default PointComponent;
+export default BaseComponent;

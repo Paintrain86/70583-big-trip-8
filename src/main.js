@@ -1,6 +1,6 @@
 import utils from './util.js';
-import getFilter from './get-filter.js';
 import getObjects from './get-objects.js';
+import Filter from './filter.js';
 import Point from './point.js';
 import PointEdit from './point-edit.js';
 
@@ -10,23 +10,13 @@ const pointsCount = 10;
 const points = getObjects(pointsCount);
 
 const initFilters = (onChange) => {
-  const filterItems = [{
-    name: `everything`,
-    isChecked: true
-  },
-  {
-    name: `future`
-  },
-  {
-    name: `past`
-  }];
+  const filter = new Filter();
   const filterBlock = document.querySelector(`.trip-filter`);
 
-  const onFilterChange = (e) => {
-    e.preventDefault();
+  filter.onFilter = (value) => {
     let filteredPoints = [];
 
-    switch (e.target.value) {
+    switch (value) {
       case `future`:
         filteredPoints = points.filter((point) => point && Date.now() < point.timeStart.getTime());
         break;
@@ -40,17 +30,8 @@ const initFilters = (onChange) => {
     onChange(filteredPoints);
   };
 
-  const renderFilters = (filters) => {
-    const filtersHtml = filters.map((item) => {
-      return getFilter(item.name, item.isChecked);
-    }).join(``);
-
-    filterBlock.innerHTML = ``;
-    utils.insertElements(filterBlock, filtersHtml);
-    filterBlock.addEventListener(`change`, onFilterChange);
-  };
-
-  renderFilters(filterItems);
+  filter.render();
+  filterBlock.parentNode.replaceChild(filter.element, filterBlock);
 };
 
 const renderPoints = (pointsArr) => {

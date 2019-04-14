@@ -1,7 +1,7 @@
 import utils from './util.js';
-import PointComponent from './point-component.js';
+import BaseComponent from './base-component.js';
 
-class Point extends PointComponent {
+class Point extends BaseComponent {
   constructor(object) {
     super();
     this._type = object.type;
