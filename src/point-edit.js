@@ -1,8 +1,8 @@
 import moment from 'moment';
 import utils from './util.js';
-import PointComponent from './point-component.js';
+import BaseComponent from './base-component.js';
 
-class PointEdit extends PointComponent {
+class PointEdit extends BaseComponent {
   constructor(object) {
     super();
     this._type = object.type;
@@ -15,15 +15,17 @@ class PointEdit extends PointComponent {
     this._offers = object.offers;
     this._offersSelected = object.offersSelected;
     this._icons = object.icons;
-    this._iconSelected = object.icons.get(object.type);
 
     this._element = null;
 
     this._onSubmit = null;
     this._onReset = null;
+    this._onDelete = null;
 
     this._onSubmitBtnClick = this._onSubmitBtnClick.bind(this);
     this._onResetBtnClick = this._onResetBtnClick.bind(this);
+    this._onDeleteBtnClick = this._onDeleteBtnClick.bind(this);
+    this._onChangeType = this._onChangeType.bind(this);
   }
 
   _onSubmitBtnClick(e) {
@@ -46,6 +48,26 @@ class PointEdit extends PointComponent {
     }
   }
 
+  _onDeleteBtnClick(e) {
+    e.preventDefault();
+
+    if (typeof this._onDelete === `function`) {
+      this._onDelete();
+    }
+  }
+
+  _onChangeType(e) {
+    e.preventDefault();
+    const typeTrigger = this._element.querySelector(`#travel-way__toggle`);
+    const typeLabel = this._element.querySelector(`label[for="travel-way__toggle"]`);
+    const destinationLabel = this._element.querySelector(`label[for="destination"]`);
+    const target = e.target;
+
+    typeLabel.textContent = this._icons.get(target.value);
+    destinationLabel.textContent = `${target.value} to`;
+    typeTrigger.checked = false;
+  }
+
   _getSubmitData() {
     const formData = new FormData(this._element.querySelector(`form`));
     const allOffers = this._offers;
@@ -59,6 +81,7 @@ class PointEdit extends PointComponent {
     };
 
     return {
+      type: formData.get(`travel-way`),
       destinationPoint: formData.get(`destination`),
       price: Number(formData.get(`price`)),
       offersSelected: getSelectedOffers(formData)
@@ -81,10 +104,10 @@ class PointEdit extends PointComponent {
     `).join(``);
   }
 
-  get waysTemplate() {
+  get typesTemplate() {
     const wayGroups = [
-      [`taxi`, `bus`, `train`, `flight`],
-      [`check-in`, `sightseeing`]
+      [`taxi`, `bus`, `train`, `flight`, `ship`],
+      [`check-in`, `sightseeing`, `restaurant`]
     ];
 
     const getWayGroupHtml = (array) => array.map((item) => {
@@ -110,12 +133,12 @@ class PointEdit extends PointComponent {
           </label>
 
           <div class="travel-way">
-            <label class="travel-way__label" for="travel-way__toggle">${this._iconSelected}</label>
+            <label class="travel-way__label" for="travel-way__toggle">${this._icons.get(this._type)}</label>
 
             <input type="checkbox" class="travel-way__toggle visually-hidden" id="travel-way__toggle">
 
             <div class="travel-way__select">
-              ${this.waysTemplate}
+              ${this.typesTemplate}
             </div>
           </div>
 
@@ -184,9 +207,14 @@ class PointEdit extends PointComponent {
     this._onReset = cb;
   }
 
+  set onDelete(cb) {
+    this._onDelete = cb;
+  }
+
   bind() {
     this._element.querySelector(`form`).addEventListener(`submit`, this._onSubmitBtnClick);
-    this._element.querySelector(`button[type="reset"]`).addEventListener(`click`, this._onResetBtnClick);
+    this._element.querySelector(`button[type="reset"]`).addEventListener(`click`, this._onDeleteBtnClick);
+    this._element.querySelector(`.travel-way__select`).addEventListener(`change`, this._onChangeType);
 
     /*  flatpickr(this._element.querySelector(`.point__date .point_input`), {altInput: true, altFormat: `j F`, dateFormat: `Y-m-d`, defaultDate: this._timeStart});
     flatpickr(this._element.querySelector(`.point__time`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeStart});*/
@@ -194,10 +222,12 @@ class PointEdit extends PointComponent {
 
   unbind() {
     this._element.querySelector(`form`).removeEventListener(`submit`, this._onSubmitBtnClick);
-    this._element.querySelector(`button[type="reset"]`).removeEventListener(`click`, this._onResetBtnClick);
+    this._element.querySelector(`button[type="reset"]`).removeEventListener(`click`, this._onDeleteBtnClick);
+    this._element.querySelector(`.travel-way__select`).removeEventListener(`change`, this._onChangeType);
   }
 
   update(data) {
+    this._type = data.type;
     this._destinationPoint = data.destinationPoint;
     this._price = data.price;
     this._offersSelected = data.offersSelected;

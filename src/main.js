@@ -1,57 +1,50 @@
 import utils from './util.js';
-import getFilter from './get-filter.js';
 import getObjects from './get-objects.js';
+import Filter from './filter.js';
 import Point from './point.js';
 import PointEdit from './point-edit.js';
+import Stats from './stats.js';
 
 window.wayDestinations = [`Bologoe`, `Ulan-Ude`, `San-Francisco`, `Tyumen`, `Tegeran`];
 
-const pointsCount = {
-  min: 0,
-  max: 10,
-  default: 7
-};
+const pointsCount = 10;
+const points = getObjects(pointsCount);
 
 const initFilters = (onChange) => {
-  const filterItems = [
-    {
-      name: `everything`,
-      isChecked: true
-    },
-    {
-      name: `future`
-    },
-    {
-      name: `past`
-    }
-  ];
+  const filter = new Filter();
   const filterBlock = document.querySelector(`.trip-filter`);
 
-  const onFilterChange = (e) => {
-    e.preventDefault();
+  filter.onFilter = (value) => {
+    let filteredPoints = [];
 
-    onChange();
+    switch (value) {
+      case `future`:
+        filteredPoints = points.filter((point) => point && Date.now() < point.timeStart.getTime());
+        break;
+      case `past`:
+        filteredPoints = points.filter((point) => point && Date.now() >= point.timeStart.getTime());
+        break;
+      default:
+        filteredPoints = points;
+    }
+
+    onChange(filteredPoints);
   };
 
-  const renderFilters = (filters) => {
-    const filtersHtml = filters.map((item) => {
-      return getFilter(item.name, item.isChecked);
-    }).join(``);
-
-    filterBlock.innerHTML = ``;
-    utils.insertElements(filterBlock, filtersHtml);
-    filterBlock.addEventListener(`change`, onFilterChange);
-  };
-
-  renderFilters(filterItems);
+  filter.render();
+  filterBlock.parentNode.replaceChild(filter.element, filterBlock);
 };
 
-const renderPoints = (isFirst) => {
+const renderPoints = (pointsArr) => {
   const pointsBlock = document.querySelector(`.trip-day__items`);
-  const count = (isFirst) ? pointsCount.default : utils.getRandomInteger(pointsCount.min, pointsCount.max);
-  const points = getObjects(count);
 
-  const renderSinglePoint = (object) => {
+  const renderSinglePoint = (index) => {
+    let object = pointsArr[index];
+
+    if (!object) {
+      return;
+    }
+
     object.destinationPoint = utils.getRandomFromArray(window.wayDestinations);
 
     const point = new Point(object);
@@ -69,12 +62,14 @@ const renderPoints = (isFirst) => {
       pointEdit.unrender();
     };
 
-    pointEdit.onSubmit = (newObject) => {
-      object.destinationPoint = newObject.destinationPoint;
-      object.price = newObject.price;
-      object.offersSelected = newObject.offersSelected;
+    pointEdit.onDelete = () => {
+      pointsBlock.removeChild(pointEdit.element);
+      pointEdit.unrender();
+      pointsArr[index] = null;
+    };
 
-      point.update(object);
+    pointEdit.onSubmit = (newObject) => {
+      point.update(updatePoint(newObject, index));
       point.render();
       pointsBlock.replaceChild(point.element, pointEdit.element);
       pointEdit.unrender();
@@ -83,14 +78,17 @@ const renderPoints = (isFirst) => {
     pointsBlock.appendChild(point.render());
   };
 
-  const createAllPoints = () => {
-    for (let pointObject of points) {
-      renderSinglePoint(pointObject);
-    }
+  const updatePoint = (newObject, i) => {
+    pointsArr[i] = Object.assign({}, pointsArr[i], newObject);
+
+    return pointsArr[i];
   };
 
   pointsBlock.innerHTML = ``;
-  createAllPoints();
+
+  for (let i = 0; i < pointsArr.length; i++) {
+    renderSinglePoint(i);
+  }
 };
 
 const setPageTitle = () => {
@@ -107,6 +105,55 @@ const setPageTitle = () => {
   title.parentNode.replaceChild(utils.createElement(newTitleHtml), title);
 };
 
+const initStatistics = () => {
+  const buttons = document.querySelectorAll(`.view-switch__item`);
+  const activeBtn = document.querySelector(`.view-switch__item--active`);
+  const stat = new Stats();
+
+  stat.onDraw = () => {
+    stat._data = points;
+    stat._drawStats();
+  };
+
+  const setView = (btnNode) => {
+    const pointsTab = document.querySelector(`main.main`);
+    const statsTab = document.querySelector(`section.statistic`);
+    const filterBlock = document.querySelector(`form.trip-filter`);
+
+    if (!btnNode) {
+      return;
+    }
+
+    buttons.forEach((btn) => {
+      btn.classList[(btnNode === btn) ? `add` : `remove`](`view-switch__item--active`);
+    });
+
+    if (btnNode.href.indexOf(`stats`) > -1) {
+      pointsTab.classList.add(`visually-hidden`);
+      filterBlock.classList.add(`visually-hidden`);
+      statsTab.classList.remove(`visually-hidden`);
+      stat._onDraw();
+    } else {
+      pointsTab.classList.remove(`visually-hidden`);
+      filterBlock.classList.remove(`visually-hidden`);
+      statsTab.classList.add(`visually-hidden`);
+    }
+  };
+
+  const switchView = (e) => {
+    e.preventDefault();
+    setView(e.target);
+  };
+
+  buttons.forEach((btn) => {
+    btn.addEventListener(`click`, switchView);
+  });
+
+  document.body.appendChild(stat.render());
+  setView(activeBtn);
+};
+
 setPageTitle();
 initFilters(renderPoints);
-renderPoints(true);
+renderPoints(points);
+initStatistics();
