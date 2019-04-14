@@ -304,6 +304,10 @@ class Stats extends BaseComponent {
         }
       }
     });
+
+    moneyChart.update();
+    transportChart.update();
+    timeSpendChart.update();
   }
 
   get template() {
