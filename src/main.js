@@ -1,16 +1,16 @@
 import utils from './util.js';
-import getObjects from './get-objects.js';
 import Filter from './filter.js';
 import Point from './point.js';
 import PointEdit from './point-edit.js';
 import Stats from './stats.js';
+import Request from './request.js';
 
-window.wayDestinations = [`Bologoe`, `Ulan-Ude`, `San-Francisco`, `Tyumen`, `Tegeran`];
+const END_POINT = `https://es8-demo-srv.appspot.com/big-trip/`;
+const AUTHORIZATION = `Basic HalleLuYa=${Math.random()}`;
 
-const pointsCount = 10;
-const points = getObjects(pointsCount);
+const request = new Request({endPoint: END_POINT, auth: AUTHORIZATION});
 
-const initFilters = (onChange) => {
+const initFilters = (pointsArr, onChange) => {
   const filter = new Filter();
   const filterBlock = document.querySelector(`.trip-filter`);
 
@@ -19,13 +19,13 @@ const initFilters = (onChange) => {
 
     switch (value) {
       case `future`:
-        filteredPoints = points.filter((point) => point && Date.now() < point.timeStart.getTime());
+        filteredPoints = pointsArr.filter((point) => point && Date.now() < point.timeStart.getTime());
         break;
       case `past`:
-        filteredPoints = points.filter((point) => point && Date.now() >= point.timeStart.getTime());
+        filteredPoints = pointsArr.filter((point) => point && Date.now() >= point.timeStart.getTime());
         break;
       default:
-        filteredPoints = points;
+        filteredPoints = pointsArr;
     }
 
     onChange(filteredPoints);
@@ -44,8 +44,6 @@ const renderPoints = (pointsArr) => {
     if (!object) {
       return;
     }
-
-    object.destinationPoint = utils.getRandomFromArray(window.wayDestinations);
 
     const point = new Point(object);
     const pointEdit = new PointEdit(object);
@@ -91,11 +89,18 @@ const renderPoints = (pointsArr) => {
   }
 };
 
-const setPageTitle = () => {
+const setDestinations = (items) => {
+  window.wayDestinations = items;
+};
+
+const setDestinationsTitle = (points) => {
   const title = document.querySelector(`.trip__points`);
+  const destinations = new Set();
+
+  points.forEach((item) => destinations.add(item.destinationPoint));
 
   const getNewTitleHtml = () => {
-    return window.wayDestinations.map((dest, i) => {
+    return [...destinations].map((dest, i) => {
       return (i === 0) ? `${dest}` : `&nbsp;&mdash; ${dest}`;
     }).join(``);
   };
@@ -105,7 +110,7 @@ const setPageTitle = () => {
   title.parentNode.replaceChild(utils.createElement(newTitleHtml), title);
 };
 
-const initStatistics = () => {
+const initStatistics = (points) => {
   const buttons = document.querySelectorAll(`.view-switch__item`);
   const activeBtn = document.querySelector(`.view-switch__item--active`);
   const stat = new Stats();
@@ -153,7 +158,15 @@ const initStatistics = () => {
   setView(activeBtn);
 };
 
-setPageTitle();
-initFilters(renderPoints);
-renderPoints(points);
-initStatistics();
+request.getDestinations()
+  .then((destinations) => {
+    setDestinations(destinations);
+  });
+
+request.getPoints()
+  .then((points) => {
+    setDestinationsTitle(points);
+    renderPoints(points);
+    initFilters(points, renderPoints);
+    initStatistics(points);
+  });

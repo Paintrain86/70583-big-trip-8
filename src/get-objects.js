@@ -124,7 +124,10 @@ const getPictures = (isPictures) => {
 
   if (isPictures) {
     for (let i = 0; i < utils.getRandomInteger(ranges.pictures.min, ranges.pictures.max); i++) {
-      pictures.push(`http://picsum.photos/300/150?r=${Math.random()}`);
+      pictures.push({
+        src: `http://picsum.photos/300/150?r=${Math.random()}`,
+        description: ``
+      });
     }
   }
 

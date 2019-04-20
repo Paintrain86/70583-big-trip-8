@@ -93,13 +93,13 @@ class PointEdit extends BaseComponent {
       <input
         class="point__offers-input visually-hidden"
         type="checkbox"
-        id="${offer.id}"
+        id="${offer.title.replace(/ /g, `-`).toLowerCase()}"
         name="offer"
-        value="${offer.id}"
-        ${(this._offersSelected.filter((it) => it.id === offer.id).length > 0) ? `checked` : ``}
+        value="${offer.title}"
+        ${(offer.accepted) ? `checked` : ``}
       >
-      <label for="${offer.id}" class="point__offers-label">
-        <span class="point__offer-service">${offer.displayName}</span> + €<span class="point__offer-price">${offer.price}</span>
+      <label for="${offer.title.replace(/ /g, `-`).toLowerCase()}" class="point__offers-label">
+        <span class="point__offer-service">${offer.title}</span> + €<span class="point__offer-price">${offer.price}</span>
       </label>
     `).join(``);
   }
@@ -154,7 +154,8 @@ class PointEdit extends BaseComponent {
 
           <label class="point__time">
             choose time
-            <input class="point__input" type="text" value="${utils.getHoursAndMinutes(this._timeStart)} - ${utils.getHoursAndMinutes(this._timeEnd)}" name="time" placeholder="00:00 — 00:00">
+            <input class="point__input" type="text" value="${utils.getHoursAndMinutes(this._timeStart)}" name="date-start" placeholder="19:00">
+            <input class="point__input" type="text" value="${utils.getHoursAndMinutes(this._timeEnd)}" name="date-end" placeholder="21:00">
           </label>
 
           <label class="point__price">
@@ -187,8 +188,8 @@ class PointEdit extends BaseComponent {
             <h3 class="point__details-title">Destination</h3>
             <p class="point__destination-text">${this._sights.join(``)}</p>
             <div class="point__destination-images">
-              ${this._pictures.map((url) => `
-                <img src="${url}" alt="picture from place" class="point__destination-image">
+              ${this._pictures.map((img) => `
+                <img src="${img.src}" alt="${img.description}" class="point__destination-image">
               `).join(``)}
             </div>
           </section>
