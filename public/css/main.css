@@ -386,6 +386,17 @@ input[type=radio]:checked + .trip-sorting__item {
   border-radius: 23px;
   box-shadow: 0 11px 20px 0 rgba(0,0,0,0.22);
   margin-bottom: 60px;
+  position: relative;
+}
+.point--progress::before{
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  content: "";
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.9) url("https://ui-ex.com/images/transparent-background-loading.gif") no-repeat center center;
 }
 .point__header {
   display: flex;

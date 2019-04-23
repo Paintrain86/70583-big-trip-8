@@ -6,9 +6,12 @@ import Stats from './stats.js';
 import Request from './request.js';
 
 const END_POINT = `https://es8-demo-srv.appspot.com/big-trip/`;
-const AUTHORIZATION = `Basic HalleLuYa=${Math.random()}`;
+const AUTHORIZATION = `Basic HalleLuYa=1`;
 
-const request = new Request({endPoint: END_POINT, auth: AUTHORIZATION});
+const request = new Request({
+  endPoint: END_POINT,
+  auth: AUTHORIZATION
+});
 
 const initFilters = (pointsArr, onChange) => {
   const filter = new Filter();
@@ -93,6 +96,10 @@ const setDestinations = (items) => {
   window.wayDestinations = items;
 };
 
+const setOfferTypes = (items) => {
+  window.offerTypes = items;
+};
+
 const setDestinationsTitle = (points) => {
   const title = document.querySelector(`.trip__points`);
   const destinations = new Set();
@@ -161,6 +168,11 @@ const initStatistics = (points) => {
 request.getDestinations()
   .then((destinations) => {
     setDestinations(destinations);
+  });
+
+request.getOfferTypes()
+  .then((offers) => {
+    setOfferTypes(offers);
   });
 
 request.getPoints()

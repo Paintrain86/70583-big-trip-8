@@ -30,7 +30,7 @@ class Request {
       .then(getJSON);
   }
 
-  getOffers() {
+  getOfferTypes() {
     return this._load({url: `offers`})
       .then(getJSON);
   }

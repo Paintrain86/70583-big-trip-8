@@ -1,4 +1,5 @@
 import moment from 'moment';
+import flatpickr from 'flatpickr';
 import utils from './util.js';
 import BaseComponent from './base-component.js';
 
@@ -13,7 +14,6 @@ class PointEdit extends BaseComponent {
     this._sights = object.sights;
     this._pictures = object.pictures;
     this._offers = object.offers;
-    this._offersSelected = object.offersSelected;
     this._icons = object.icons;
 
     this._element = null;
@@ -26,6 +26,7 @@ class PointEdit extends BaseComponent {
     this._onResetBtnClick = this._onResetBtnClick.bind(this);
     this._onDeleteBtnClick = this._onDeleteBtnClick.bind(this);
     this._onChangeType = this._onChangeType.bind(this);
+    this._onChangeDestination = this._onChangeDestination.bind(this);
   }
 
   _onSubmitBtnClick(e) {
@@ -61,11 +62,55 @@ class PointEdit extends BaseComponent {
     const typeTrigger = this._element.querySelector(`#travel-way__toggle`);
     const typeLabel = this._element.querySelector(`label[for="travel-way__toggle"]`);
     const destinationLabel = this._element.querySelector(`label[for="destination"]`);
+    const offersBlock = this._element.querySelector(`.point__offers-wrap`);
     const target = e.target;
+    const typeObject = window.offerTypes.filter((item) => item.type === target.value)[0];
 
     typeLabel.textContent = this._icons.get(target.value);
     destinationLabel.textContent = `${target.value} to`;
     typeTrigger.checked = false;
+
+    this._element.classList.add(`point--progress`);
+    offersBlock.innerHTML = ``;
+
+    if (typeof typeObject !== `undefined` && typeObject.offers.length > 0) {
+      utils.insertElements(offersBlock, typeObject.offers.map((offer) => `
+        <input
+          class="point__offers-input visually-hidden"
+          type="checkbox"
+          id="${offer.name.replace(/ /g, `-`).toLowerCase()}"
+          name="offer"
+          value="${offer.name}"
+        >
+        <label for="${offer.name.replace(/ /g, `-`).toLowerCase()}" class="point__offers-label">
+          <span class="point__offer-service">${offer.name}</span> + €<span class="point__offer-price">${offer.price}</span>
+        </label>
+      `).join(``));
+    } else {
+      offersBlock.textContent = `There's no available offers for this trip type`;
+    }
+    this._element.classList.remove(`point--progress`);
+  }
+
+  _onChangeDestination(e) {
+    const dest = e.target.value;
+    const destObject = window.wayDestinations.filter((item) => dest === item.name)[0];
+    const descrElement = this._element.querySelector(`.point__destination-text`);
+    const picturesElement = this._element.querySelector(`.point__destination-images`);
+
+    this._element.classList.add(`point--progress`);
+    descrElement.innerHTML = ``;
+    picturesElement.innerHTML = ``;
+
+    if (typeof destObject === `undefined`) {
+      descrElement.textContent = `Unfortunately, there's no description for this way point :(`;
+    } else {
+      descrElement.textContent = destObject.description;
+      utils.insertElements(picturesElement, destObject.pictures.map((img) => `
+        <img src="${img.src}" alt="${img.description}" class="point__destination-image">
+      `).join(``));
+    }
+    this._element.classList.remove(`point--progress`);
   }
 
   _getSubmitData() {
@@ -89,7 +134,7 @@ class PointEdit extends BaseComponent {
   }
 
   get offersHtml() {
-    return this._offers.map((offer) => `
+    const result = this._offers.map((offer) => `
       <input
         class="point__offers-input visually-hidden"
         type="checkbox"
@@ -102,6 +147,8 @@ class PointEdit extends BaseComponent {
         <span class="point__offer-service">${offer.title}</span> + €<span class="point__offer-price">${offer.price}</span>
       </label>
     `).join(``);
+
+    return (result === ``) ? `No offers available for this destination point` : result;
   }
 
   get typesTemplate() {
@@ -147,7 +194,7 @@ class PointEdit extends BaseComponent {
             <input class="point__destination-input" list="destination-select" id="destination" value="${this._destinationPoint}" name="destination">
             <datalist id="destination-select">
               <option value="airport"></option>
-              ${window.wayDestinations.map((dest) => `<option value="${dest}" ${(dest === this._destinationPoint) ? `selected` : ``}></option>`).join(``)}
+              ${window.wayDestinations.map((dest) => `<option value="${dest.name}" ${(dest.name === this._destinationPoint) ? `selected` : ``}></option>`).join(``)}
               <option value="hotel"></option>
             </datalist>
           </div>
@@ -186,7 +233,7 @@ class PointEdit extends BaseComponent {
           </section>
           <section class="point__destination">
             <h3 class="point__details-title">Destination</h3>
-            <p class="point__destination-text">${this._sights.join(``)}</p>
+            <p class="point__destination-text">${this._sights}</p>
             <div class="point__destination-images">
               ${this._pictures.map((img) => `
                 <img src="${img.src}" alt="${img.description}" class="point__destination-image">
@@ -217,8 +264,10 @@ class PointEdit extends BaseComponent {
     this._element.querySelector(`button[type="reset"]`).addEventListener(`click`, this._onDeleteBtnClick);
     this._element.querySelector(`.travel-way__select`).addEventListener(`change`, this._onChangeType);
 
-    /*  flatpickr(this._element.querySelector(`.point__date .point_input`), {altInput: true, altFormat: `j F`, dateFormat: `Y-m-d`, defaultDate: this._timeStart});
-    flatpickr(this._element.querySelector(`.point__time`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeStart});*/
+    flatpickr(this._element.querySelector(`.point__time [name="date-start"]`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeStart});
+    flatpickr(this._element.querySelector(`.point__time [name="date-end"]`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeEnd});
+
+    this._element.querySelector(`#destination`).addEventListener(`change`, this._onChangeDestination);
   }
 
   unbind() {
