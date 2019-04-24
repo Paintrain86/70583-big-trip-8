@@ -9,8 +9,6 @@ class Point extends BaseComponent {
     this._timeStart = object.timeStart;
     this._timeEnd = object.timeEnd;
     this._price = object.price;
-    this._sights = object.sights;
-    this._pictures = object.pictures;
     this._offers = object.offers;
     this._icons = object.icons;
 
@@ -45,7 +43,7 @@ class Point extends BaseComponent {
     }
 
     return this._offers.reduce((acc, offer) => {
-      return {price: acc.price + (offer.accepted ? offer.price : 0)};
+      return {price: ((typeof acc.accepted === `undefined` || acc.accepted === true) ? acc.price : 0) + (offer.accepted ? offer.price : 0)};
     }).price;
   }
 
@@ -80,7 +78,7 @@ class Point extends BaseComponent {
     this._type = data.type;
     this._destinationPoint = data.destinationPoint;
     this._price = data.price;
-    this._offersSelected = data.offersSelected;
+    this._offers = data.offers;
   }
 }
 

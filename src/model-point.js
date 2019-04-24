@@ -28,7 +28,18 @@ class ModelPoint {
 
   convertToServerFormat() {
     return {
-      id: this.id
+      'id': this.id,
+      'type': this.type,
+      'date_from': this.timeStart.getTime(),
+      'date_to': this.timeend.getTime(),
+      'base_price': this.price,
+      'is_favorite': this.isFavourite,
+      'destination': {
+        'name': this.destinationPoint,
+        'description': this.sights,
+        'pictures': this.pictures
+      },
+      'offers': this.offers
     };
   }
 

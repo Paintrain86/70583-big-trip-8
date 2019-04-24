@@ -14,7 +14,11 @@ class PointEdit extends BaseComponent {
     this._sights = object.sights;
     this._pictures = object.pictures;
     this._offers = object.offers;
+    this._isFavourite = object.isFavourite;
     this._icons = object.icons;
+
+    this._tempType = null;
+    this._tempDestination = null;
 
     this._element = null;
 
@@ -74,6 +78,8 @@ class PointEdit extends BaseComponent {
     offersBlock.innerHTML = ``;
 
     if (typeof typeObject !== `undefined` && typeObject.offers.length > 0) {
+      this._tempType = typeObject;
+
       utils.insertElements(offersBlock, typeObject.offers.map((offer) => `
         <input
           class="point__offers-input visually-hidden"
@@ -105,6 +111,8 @@ class PointEdit extends BaseComponent {
     if (typeof destObject === `undefined`) {
       descrElement.textContent = `Unfortunately, there's no description for this way point :(`;
     } else {
+      this._tempDestination = destObject;
+
       descrElement.textContent = destObject.description;
       utils.insertElements(picturesElement, destObject.pictures.map((img) => `
         <img src="${img.src}" alt="${img.description}" class="point__destination-image">
@@ -115,21 +123,29 @@ class PointEdit extends BaseComponent {
 
   _getSubmitData() {
     const formData = new FormData(this._element.querySelector(`form`));
-    const allOffers = this._offers;
+    const allOffers = (this._tempType) ? this._tempType.offers : this._offers;
 
-    const getSelectedOffers = (data) => {
-      const offers = data.getAll(`offer`);
+    const updateOffers = (data) => {
+      const dataOffers = data.getAll(`offer`);
 
-      return allOffers.filter((item) => {
-        return offers.indexOf(item.id) > -1;
+      return allOffers.map((item) => {
+        const title = (typeof item.title === `undefined`) ? item.name : item.title;
+        return {
+          'title': title,
+          'price': item.price,
+          'accepted': dataOffers.indexOf(title) > -1
+        };
       });
     };
 
     return {
       type: formData.get(`travel-way`),
       destinationPoint: formData.get(`destination`),
+      sights: (this._tempDestination) ? this._tempDestination.description : this._sights,
+      pictures: (this._tempDestination) ? this._tempDestination.pictures : this._pictures,
       price: Number(formData.get(`price`)),
-      offersSelected: getSelectedOffers(formData)
+      offers: updateOffers(formData),
+      isFavourite: formData.get(`favorite`) === `on`
     };
   }
 
@@ -217,7 +233,7 @@ class PointEdit extends BaseComponent {
           </div>
 
           <div class="paint__favorite-wrap">
-            <input type="checkbox" class="point__favorite-input visually-hidden" id="favorite" name="favorite">
+            <input type="checkbox" class="point__favorite-input visually-hidden" id="favorite" name="favorite" ${(this._isFavourite) ? `checked` : ``}>
             <label class="point__favorite" for="favorite">favorite</label>
           </div>
         </header>
@@ -274,13 +290,17 @@ class PointEdit extends BaseComponent {
     this._element.querySelector(`form`).removeEventListener(`submit`, this._onSubmitBtnClick);
     this._element.querySelector(`button[type="reset"]`).removeEventListener(`click`, this._onDeleteBtnClick);
     this._element.querySelector(`.travel-way__select`).removeEventListener(`change`, this._onChangeType);
+    this._element.querySelector(`#destination`).removeEventListener(`change`, this._onChangeDestination);
   }
 
   update(data) {
     this._type = data.type;
     this._destinationPoint = data.destinationPoint;
+    this._sights = data.sights;
+    this._pictures = data.pictures;
     this._price = data.price;
-    this._offersSelected = data.offersSelected;
+    this._offers = data.offers;
+    this._isFavourite = data.isFavourite;
   }
 }
 
