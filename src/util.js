@@ -1,3 +1,7 @@
+const Codes = {
+  'ESCAPE': 27
+};
+
 const getTwoDigitsString = (num) => (num > 9) ? `${num}` : `0${num}`;
 
 const getHoursAndMinutesString = (date) => `${getTwoDigitsString(date.getHours())}:${getTwoDigitsString(date.getMinutes())}`;
@@ -49,6 +53,7 @@ const createSingleElement = (elemHtml) => {
 };
 
 export default {
+  keyCodes: Codes,
   getTwoDigits: getTwoDigitsString,
   getHoursAndMinutes: getHoursAndMinutesString,
   getTimeDifference: getTimeDifferenceString,

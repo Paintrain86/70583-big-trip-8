@@ -62,6 +62,17 @@ class Request {
     });
   }
 
+  createPoint({data}) {
+    return this._load({
+      url: `points`,
+      method: Methods.POST,
+      body: JSON.stringify(data),
+      headers: new Headers({'Content-Type': `application/json`})
+    })
+    .then(getJSON)
+    .then(ModelPoint.parsePoint);
+  }
+
   deletePoint({id}) {
     return this._load({
       url: `points/${id}`,

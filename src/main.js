@@ -4,6 +4,7 @@ import Point from './point.js';
 import PointEdit from './point-edit.js';
 import Stats from './stats.js';
 import Request from './request.js';
+import ModelPoint from './model-point.js';
 
 const END_POINT = `https://es8-demo-srv.appspot.com/big-trip`;
 const AUTHORIZATION = `Basic HalleLuYa=1`;
@@ -14,6 +15,8 @@ const request = new Request({
 });
 
 const pageTitle = document.querySelector(`.trip__points`);
+const pointsBlock = document.querySelector(`.trip-day__items`);
+const newPointBtn = document.querySelector(`.trip-controls__new-event`);
 
 const requestActionDelay = 700;
 
@@ -43,8 +46,6 @@ const initFilters = (pointsArr, onChange) => {
 };
 
 const renderPoints = (pointsArr) => {
-  const pointsBlock = document.querySelector(`.trip-day__items`);
-
   const renderSinglePoint = (object) => {
     if (!object) {
       return;
@@ -74,24 +75,25 @@ const renderPoints = (pointsArr) => {
           pointsBlock.removeChild(pointEdit.element);
           pointEdit.unrender();
           object = null;
+          setTotalPrice(pointsArr);
         }, requestActionDelay);
       });
     };
 
     pointEdit.onSubmit = (newObject) => {
-      updateObject(newObject);
+      object.update(newObject);
 
       request.updatePoint({
         id: object.id,
         data: object.convertToServerFormat()
       })
-      .then(updateObject)
-      .then((newPointObject) => {
+      .then(() => {
         setTimeout(function () {
-          point.update(newPointObject);
+          point.update(object);
           point.render();
           pointsBlock.replaceChild(point.element, pointEdit.element);
           pointEdit.unrender();
+          setTotalPrice(pointsArr);
         }, requestActionDelay);
       })
       .catch((err) => {
@@ -117,6 +119,49 @@ const renderPoints = (pointsArr) => {
   }
 };
 
+const initNewPoint = (pointsArr) => {
+  const showPointCreation = (e) => {
+    e.preventDefault();
+
+    const object = new ModelPoint();
+    const pointCreate = new PointEdit(object);
+
+    pointCreate.render();
+    pointCreate.element.querySelector(`button[type="reset"]`).classList.add(`visually-hidden`);
+    pointsBlock.prepend(pointCreate.element);
+
+    pointCreate.onReset = () => {
+      pointsBlock.removeChild(pointCreate.element);
+      pointCreate.unrender();
+    };
+
+    pointCreate.onSubmit = (newObject) => {
+      object.update(newObject);
+
+      request.createPoint({
+        data: object.convertToServerFormat()
+      })
+      .then((newPointObject) => {
+        createObject(newPointObject);
+
+        setTimeout(function () {
+          renderPoints(pointsArr);
+          setTotalPrice(pointsArr);
+        }, requestActionDelay);
+      })
+      .catch((err) => {
+        pointCreate._unblockForm(err);
+      });
+    };
+  };
+
+  const createObject = (newObject) => {
+    pointsArr.push(newObject);
+  };
+
+  newPointBtn.addEventListener(`click`, showPointCreation);
+};
+
 const setDestinations = (items) => {
   window.wayDestinations = items;
 };
@@ -139,6 +184,29 @@ const setDestinationsTitle = (points) => {
   const newTitleHtml = `<h1 class="trip__points">${getNewTitleHtml()}</h1>`;
 
   pageTitle.parentNode.replaceChild(utils.createElement(newTitleHtml), pageTitle);
+};
+
+const setTotalPrice = (points) => {
+  const totalPriceElem = document.querySelector(`.trip__total-cost`);
+  let result = 0;
+
+  const getOffersPrice = (point) => {
+    if (point.offers.length === 0) {
+      return 0;
+    }
+
+    return point.offers.reduce((acc, offer) => {
+      return {price: ((typeof acc.accepted === `undefined` || acc.accepted === true) ? acc.price : 0) + (offer.accepted ? offer.price : 0)};
+    }).price;
+  };
+
+  result = points.reduce((total, item) => {
+    return {
+      price: ((total) ? total.price : 0) + ((item) ? getOffersPrice(item) : 0) + ((typeof total.id === `undefined` && item) ? item.price : 0)
+    };
+  }).price;
+
+  totalPriceElem.textContent = result.toLocaleString();
 };
 
 const initStatistics = (points) => {
@@ -193,7 +261,9 @@ pageTitle.textContent = `Loading routes...`;
 request.getPoints()
   .then((points) => {
     setDestinationsTitle(points);
+    setTotalPrice(points);
     renderPoints(points);
+    initNewPoint(points);
     initFilters(points, renderPoints);
     initStatistics(points);
   });

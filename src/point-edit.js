@@ -32,6 +32,7 @@ class PointEdit extends BaseComponent {
 
     this._onSubmitBtnClick = this._onSubmitBtnClick.bind(this);
     this._onResetBtnClick = this._onResetBtnClick.bind(this);
+    this._onEscapePressed = this._onEscapePressed.bind(this);
     this._onDeleteBtnClick = this._onDeleteBtnClick.bind(this);
     this._onChangeType = this._onChangeType.bind(this);
     this._onChangeDestination = this._onChangeDestination.bind(this);
@@ -49,6 +50,14 @@ class PointEdit extends BaseComponent {
     }
 
     this.update(changedData);
+  }
+
+  _onEscapePressed(e) {
+    e.preventDefault();
+
+    if (e.keyCode === utils.keyCodes.ESCAPE) {
+      this._onResetBtnClick(e);
+    }
   }
 
   _onResetBtnClick(e) {
@@ -181,19 +190,23 @@ class PointEdit extends BaseComponent {
   }
 
   get offersHtml() {
-    const result = this._offers.map((offer) => `
-      <input
-        class="point__offers-input visually-hidden"
-        type="checkbox"
-        id="${offer.title.replace(/ /g, `-`).toLowerCase()}"
-        name="offer"
-        value="${offer.title}"
-        ${(offer.accepted) ? `checked` : ``}
-      >
-      <label for="${offer.title.replace(/ /g, `-`).toLowerCase()}" class="point__offers-label">
-        <span class="point__offer-service">${offer.title}</span> + €<span class="point__offer-price">${offer.price}</span>
-      </label>
-    `).join(``);
+    const result = this._offers.map((offer) => {
+      const title = (typeof offer.title === `undefined`) ? offer.name : offer.title;
+
+      return `
+        <input
+          class="point__offers-input visually-hidden"
+          type="checkbox"
+          id="${title.replace(/ /g, `-`).toLowerCase()}"
+          name="offer"
+          value="${title}"
+          ${(offer.accepted) ? `checked` : ``}
+        >
+        <label for="${title.replace(/ /g, `-`).toLowerCase()}" class="point__offers-label">
+          <span class="point__offer-service">${title}</span> + €<span class="point__offer-price">${offer.price}</span>
+        </label>
+      `;
+    }).join(``);
 
     return (result === ``) ? `No offers available for this destination point` : result;
   }
@@ -315,6 +328,8 @@ class PointEdit extends BaseComponent {
     this._element.querySelector(`.travel-way__select`).addEventListener(`change`, this._onChangeType);
     this._element.querySelector(`#destination`).addEventListener(`change`, this._onChangeDestination);
 
+    document.body.addEventListener(`keyup`, this._onEscapePressed);
+
     flatpickr(this._element.querySelector(`.point__time [name="date-start"]`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeStart});
     flatpickr(this._element.querySelector(`.point__time [name="date-end"]`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeEnd});
   }
@@ -324,6 +339,8 @@ class PointEdit extends BaseComponent {
     this._resetBtn.removeEventListener(`click`, this._onDeleteBtnClick);
     this._element.querySelector(`.travel-way__select`).removeEventListener(`change`, this._onChangeType);
     this._element.querySelector(`#destination`).removeEventListener(`change`, this._onChangeDestination);
+
+    document.body.removeEventListener(`keyup`, this._onEscapePressed);
   }
 
   update(data) {
