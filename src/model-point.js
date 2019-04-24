@@ -31,7 +31,7 @@ class ModelPoint {
       'id': this.id,
       'type': this.type,
       'date_from': this.timeStart.getTime(),
-      'date_to': this.timeend.getTime(),
+      'date_to': this.timeEnd.getTime(),
       'base_price': this.price,
       'is_favorite': this.isFavourite,
       'destination': {

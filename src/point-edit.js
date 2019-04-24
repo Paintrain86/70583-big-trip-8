@@ -6,6 +6,7 @@ import BaseComponent from './base-component.js';
 class PointEdit extends BaseComponent {
   constructor(object) {
     super();
+    this._id = object.id;
     this._type = object.type;
     this._destinationPoint = object.destinationPoint;
     this._timeStart = object.timeStart;
@@ -21,6 +22,9 @@ class PointEdit extends BaseComponent {
     this._tempDestination = null;
 
     this._element = null;
+
+    this._submitBtn = null;
+    this._resetBtn = null;
 
     this._onSubmit = null;
     this._onReset = null;
@@ -39,6 +43,8 @@ class PointEdit extends BaseComponent {
     const changedData = this._getSubmitData();
 
     if (typeof this._onSubmit === `function`) {
+      this._submitBtn.textContent = `Sending...`;
+      this._blockForm();
       this._onSubmit(changedData);
     }
 
@@ -57,6 +63,8 @@ class PointEdit extends BaseComponent {
     e.preventDefault();
 
     if (typeof this._onDelete === `function`) {
+      this._resetBtn.textContent = `Deleting...`;
+      this._blockForm();
       this._onDelete();
     }
   }
@@ -139,6 +147,7 @@ class PointEdit extends BaseComponent {
     };
 
     return {
+      id: this._id,
       type: formData.get(`travel-way`),
       destinationPoint: formData.get(`destination`),
       sights: (this._tempDestination) ? this._tempDestination.description : this._sights,
@@ -147,6 +156,28 @@ class PointEdit extends BaseComponent {
       offers: updateOffers(formData),
       isFavourite: formData.get(`favorite`) === `on`
     };
+  }
+
+  _blockForm() {
+    this._element.classList.add(`point--progress`);
+    this._element.classList.remove(`point--error`);
+
+    this._resetBtn.disabled = true;
+    this._submitBtn.disabled = true;
+  }
+
+  _unblockForm(err) {
+    this._element.classList.remove(`point--progress`);
+
+    this._resetBtn.disabled = false;
+    this._resetBtn.textContent = `Delete`;
+
+    this._submitBtn.disabled = false;
+    this._submitBtn.textContent = `Save`;
+
+    if (typeof err !== `undefined`) {
+      this._element.classList.add(`point--error`);
+    }
   }
 
   get offersHtml() {
@@ -276,19 +307,21 @@ class PointEdit extends BaseComponent {
   }
 
   bind() {
+    this._resetBtn = this._element.querySelector(`button[type="reset"]`);
+    this._submitBtn = this._element.querySelector(`button[type="submit"]`);
+
     this._element.querySelector(`form`).addEventListener(`submit`, this._onSubmitBtnClick);
-    this._element.querySelector(`button[type="reset"]`).addEventListener(`click`, this._onDeleteBtnClick);
+    this._resetBtn.addEventListener(`click`, this._onDeleteBtnClick);
     this._element.querySelector(`.travel-way__select`).addEventListener(`change`, this._onChangeType);
+    this._element.querySelector(`#destination`).addEventListener(`change`, this._onChangeDestination);
 
     flatpickr(this._element.querySelector(`.point__time [name="date-start"]`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeStart});
     flatpickr(this._element.querySelector(`.point__time [name="date-end"]`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeEnd});
-
-    this._element.querySelector(`#destination`).addEventListener(`change`, this._onChangeDestination);
   }
 
   unbind() {
     this._element.querySelector(`form`).removeEventListener(`submit`, this._onSubmitBtnClick);
-    this._element.querySelector(`button[type="reset"]`).removeEventListener(`click`, this._onDeleteBtnClick);
+    this._resetBtn.removeEventListener(`click`, this._onDeleteBtnClick);
     this._element.querySelector(`.travel-way__select`).removeEventListener(`change`, this._onChangeType);
     this._element.querySelector(`#destination`).removeEventListener(`change`, this._onChangeDestination);
   }

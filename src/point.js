@@ -4,6 +4,7 @@ import BaseComponent from './base-component.js';
 class Point extends BaseComponent {
   constructor(object) {
     super();
+    this._id = object.id;
     this._type = object.type;
     this._destinationPoint = object.destinationPoint;
     this._timeStart = object.timeStart;
