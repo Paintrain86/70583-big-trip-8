@@ -1,10 +1,12 @@
 import moment from 'moment';
+import flatpickr from 'flatpickr';
 import utils from './util.js';
 import BaseComponent from './base-component.js';
 
 class PointEdit extends BaseComponent {
   constructor(object) {
     super();
+    this._id = object.id;
     this._type = object.type;
     this._destinationPoint = object.destinationPoint;
     this._timeStart = object.timeStart;
@@ -13,10 +15,16 @@ class PointEdit extends BaseComponent {
     this._sights = object.sights;
     this._pictures = object.pictures;
     this._offers = object.offers;
-    this._offersSelected = object.offersSelected;
+    this._isFavourite = object.isFavourite;
     this._icons = object.icons;
 
+    this._tempType = null;
+    this._tempDestination = null;
+
     this._element = null;
+
+    this._submitBtn = null;
+    this._resetBtn = null;
 
     this._onSubmit = null;
     this._onReset = null;
@@ -26,6 +34,7 @@ class PointEdit extends BaseComponent {
     this._onResetBtnClick = this._onResetBtnClick.bind(this);
     this._onDeleteBtnClick = this._onDeleteBtnClick.bind(this);
     this._onChangeType = this._onChangeType.bind(this);
+    this._onChangeDestination = this._onChangeDestination.bind(this);
   }
 
   _onSubmitBtnClick(e) {
@@ -34,6 +43,8 @@ class PointEdit extends BaseComponent {
     const changedData = this._getSubmitData();
 
     if (typeof this._onSubmit === `function`) {
+      this._submitBtn.textContent = `Sending...`;
+      this._blockForm();
       this._onSubmit(changedData);
     }
 
@@ -52,6 +63,8 @@ class PointEdit extends BaseComponent {
     e.preventDefault();
 
     if (typeof this._onDelete === `function`) {
+      this._resetBtn.textContent = `Deleting...`;
+      this._blockForm();
       this._onDelete();
     }
   }
@@ -61,47 +74,128 @@ class PointEdit extends BaseComponent {
     const typeTrigger = this._element.querySelector(`#travel-way__toggle`);
     const typeLabel = this._element.querySelector(`label[for="travel-way__toggle"]`);
     const destinationLabel = this._element.querySelector(`label[for="destination"]`);
+    const offersBlock = this._element.querySelector(`.point__offers-wrap`);
     const target = e.target;
+    const typeObject = window.offerTypes.filter((item) => item.type === target.value)[0];
 
     typeLabel.textContent = this._icons.get(target.value);
     destinationLabel.textContent = `${target.value} to`;
     typeTrigger.checked = false;
+
+    this._element.classList.add(`point--progress`);
+    offersBlock.innerHTML = ``;
+
+    if (typeof typeObject !== `undefined` && typeObject.offers.length > 0) {
+      this._tempType = typeObject;
+
+      utils.insertElements(offersBlock, typeObject.offers.map((offer) => `
+        <input
+          class="point__offers-input visually-hidden"
+          type="checkbox"
+          id="${offer.name.replace(/ /g, `-`).toLowerCase()}"
+          name="offer"
+          value="${offer.name}"
+        >
+        <label for="${offer.name.replace(/ /g, `-`).toLowerCase()}" class="point__offers-label">
+          <span class="point__offer-service">${offer.name}</span> + €<span class="point__offer-price">${offer.price}</span>
+        </label>
+      `).join(``));
+    } else {
+      offersBlock.textContent = `There's no available offers for this trip type`;
+    }
+    this._element.classList.remove(`point--progress`);
+  }
+
+  _onChangeDestination(e) {
+    const dest = e.target.value;
+    const destObject = window.wayDestinations.filter((item) => dest === item.name)[0];
+    const descrElement = this._element.querySelector(`.point__destination-text`);
+    const picturesElement = this._element.querySelector(`.point__destination-images`);
+
+    this._element.classList.add(`point--progress`);
+    descrElement.innerHTML = ``;
+    picturesElement.innerHTML = ``;
+
+    if (typeof destObject === `undefined`) {
+      descrElement.textContent = `Unfortunately, there's no description for this way point :(`;
+    } else {
+      this._tempDestination = destObject;
+
+      descrElement.textContent = destObject.description;
+      utils.insertElements(picturesElement, destObject.pictures.map((img) => `
+        <img src="${img.src}" alt="${img.description}" class="point__destination-image">
+      `).join(``));
+    }
+    this._element.classList.remove(`point--progress`);
   }
 
   _getSubmitData() {
     const formData = new FormData(this._element.querySelector(`form`));
-    const allOffers = this._offers;
+    const allOffers = (this._tempType) ? this._tempType.offers : this._offers;
 
-    const getSelectedOffers = (data) => {
-      const offers = data.getAll(`offer`);
+    const updateOffers = (data) => {
+      const dataOffers = data.getAll(`offer`);
 
-      return allOffers.filter((item) => {
-        return offers.indexOf(item.id) > -1;
+      return allOffers.map((item) => {
+        const title = (typeof item.title === `undefined`) ? item.name : item.title;
+        return {
+          'title': title,
+          'price': item.price,
+          'accepted': dataOffers.indexOf(title) > -1
+        };
       });
     };
 
     return {
+      id: this._id,
       type: formData.get(`travel-way`),
       destinationPoint: formData.get(`destination`),
+      sights: (this._tempDestination) ? this._tempDestination.description : this._sights,
+      pictures: (this._tempDestination) ? this._tempDestination.pictures : this._pictures,
       price: Number(formData.get(`price`)),
-      offersSelected: getSelectedOffers(formData)
+      offers: updateOffers(formData),
+      isFavourite: formData.get(`favorite`) === `on`
     };
   }
 
+  _blockForm() {
+    this._element.classList.add(`point--progress`);
+    this._element.classList.remove(`point--error`);
+
+    this._resetBtn.disabled = true;
+    this._submitBtn.disabled = true;
+  }
+
+  _unblockForm(err) {
+    this._element.classList.remove(`point--progress`);
+
+    this._resetBtn.disabled = false;
+    this._resetBtn.textContent = `Delete`;
+
+    this._submitBtn.disabled = false;
+    this._submitBtn.textContent = `Save`;
+
+    if (typeof err !== `undefined`) {
+      this._element.classList.add(`point--error`);
+    }
+  }
+
   get offersHtml() {
-    return this._offers.map((offer) => `
+    const result = this._offers.map((offer) => `
       <input
         class="point__offers-input visually-hidden"
         type="checkbox"
-        id="${offer.id}"
+        id="${offer.title.replace(/ /g, `-`).toLowerCase()}"
         name="offer"
-        value="${offer.id}"
-        ${(this._offersSelected.filter((it) => it.id === offer.id).length > 0) ? `checked` : ``}
+        value="${offer.title}"
+        ${(offer.accepted) ? `checked` : ``}
       >
-      <label for="${offer.id}" class="point__offers-label">
-        <span class="point__offer-service">${offer.displayName}</span> + €<span class="point__offer-price">${offer.price}</span>
+      <label for="${offer.title.replace(/ /g, `-`).toLowerCase()}" class="point__offers-label">
+        <span class="point__offer-service">${offer.title}</span> + €<span class="point__offer-price">${offer.price}</span>
       </label>
     `).join(``);
+
+    return (result === ``) ? `No offers available for this destination point` : result;
   }
 
   get typesTemplate() {
@@ -147,14 +241,15 @@ class PointEdit extends BaseComponent {
             <input class="point__destination-input" list="destination-select" id="destination" value="${this._destinationPoint}" name="destination">
             <datalist id="destination-select">
               <option value="airport"></option>
-              ${window.wayDestinations.map((dest) => `<option value="${dest}" ${(dest === this._destinationPoint) ? `selected` : ``}></option>`).join(``)}
+              ${window.wayDestinations.map((dest) => `<option value="${dest.name}" ${(dest.name === this._destinationPoint) ? `selected` : ``}></option>`).join(``)}
               <option value="hotel"></option>
             </datalist>
           </div>
 
           <label class="point__time">
             choose time
-            <input class="point__input" type="text" value="${utils.getHoursAndMinutes(this._timeStart)} - ${utils.getHoursAndMinutes(this._timeEnd)}" name="time" placeholder="00:00 — 00:00">
+            <input class="point__input" type="text" value="${utils.getHoursAndMinutes(this._timeStart)}" name="date-start" placeholder="19:00">
+            <input class="point__input" type="text" value="${utils.getHoursAndMinutes(this._timeEnd)}" name="date-end" placeholder="21:00">
           </label>
 
           <label class="point__price">
@@ -169,7 +264,7 @@ class PointEdit extends BaseComponent {
           </div>
 
           <div class="paint__favorite-wrap">
-            <input type="checkbox" class="point__favorite-input visually-hidden" id="favorite" name="favorite">
+            <input type="checkbox" class="point__favorite-input visually-hidden" id="favorite" name="favorite" ${(this._isFavourite) ? `checked` : ``}>
             <label class="point__favorite" for="favorite">favorite</label>
           </div>
         </header>
@@ -185,10 +280,10 @@ class PointEdit extends BaseComponent {
           </section>
           <section class="point__destination">
             <h3 class="point__details-title">Destination</h3>
-            <p class="point__destination-text">${this._sights.join(``)}</p>
+            <p class="point__destination-text">${this._sights}</p>
             <div class="point__destination-images">
-              ${this._pictures.map((url) => `
-                <img src="${url}" alt="picture from place" class="point__destination-image">
+              ${this._pictures.map((img) => `
+                <img src="${img.src}" alt="${img.description}" class="point__destination-image">
               `).join(``)}
             </div>
           </section>
@@ -212,25 +307,33 @@ class PointEdit extends BaseComponent {
   }
 
   bind() {
-    this._element.querySelector(`form`).addEventListener(`submit`, this._onSubmitBtnClick);
-    this._element.querySelector(`button[type="reset"]`).addEventListener(`click`, this._onDeleteBtnClick);
-    this._element.querySelector(`.travel-way__select`).addEventListener(`change`, this._onChangeType);
+    this._resetBtn = this._element.querySelector(`button[type="reset"]`);
+    this._submitBtn = this._element.querySelector(`button[type="submit"]`);
 
-    /*  flatpickr(this._element.querySelector(`.point__date .point_input`), {altInput: true, altFormat: `j F`, dateFormat: `Y-m-d`, defaultDate: this._timeStart});
-    flatpickr(this._element.querySelector(`.point__time`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeStart});*/
+    this._element.querySelector(`form`).addEventListener(`submit`, this._onSubmitBtnClick);
+    this._resetBtn.addEventListener(`click`, this._onDeleteBtnClick);
+    this._element.querySelector(`.travel-way__select`).addEventListener(`change`, this._onChangeType);
+    this._element.querySelector(`#destination`).addEventListener(`change`, this._onChangeDestination);
+
+    flatpickr(this._element.querySelector(`.point__time [name="date-start"]`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeStart});
+    flatpickr(this._element.querySelector(`.point__time [name="date-end"]`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeEnd});
   }
 
   unbind() {
     this._element.querySelector(`form`).removeEventListener(`submit`, this._onSubmitBtnClick);
-    this._element.querySelector(`button[type="reset"]`).removeEventListener(`click`, this._onDeleteBtnClick);
+    this._resetBtn.removeEventListener(`click`, this._onDeleteBtnClick);
     this._element.querySelector(`.travel-way__select`).removeEventListener(`change`, this._onChangeType);
+    this._element.querySelector(`#destination`).removeEventListener(`change`, this._onChangeDestination);
   }
 
   update(data) {
     this._type = data.type;
     this._destinationPoint = data.destinationPoint;
+    this._sights = data.sights;
+    this._pictures = data.pictures;
     this._price = data.price;
-    this._offersSelected = data.offersSelected;
+    this._offers = data.offers;
+    this._isFavourite = data.isFavourite;
   }
 }
 

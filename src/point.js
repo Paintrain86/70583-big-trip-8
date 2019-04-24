@@ -4,14 +4,13 @@ import BaseComponent from './base-component.js';
 class Point extends BaseComponent {
   constructor(object) {
     super();
+    this._id = object.id;
     this._type = object.type;
     this._destinationPoint = object.destinationPoint;
     this._timeStart = object.timeStart;
     this._timeEnd = object.timeEnd;
     this._price = object.price;
-    this._sights = object.sights;
-    this._pictures = object.pictures;
-    this._offersSelected = object.offersSelected;
+    this._offers = object.offers;
     this._icons = object.icons;
 
     this._element = null;
@@ -29,21 +28,23 @@ class Point extends BaseComponent {
   }
 
   get offersHtml() {
-    const offersHtml = this._offersSelected.map((offer) => `
-    <li>
-      <button class="trip-point__offer">${offer.displayName} +&euro;&nbsp;${offer.price}</button>
-    </li>`).join(``);
+    const offersHtml = this._offers.map((offer) => {
+      return (!offer.accepted ? `` : `
+      <li>
+        <button class="trip-point__offer">${offer.title} +&euro;&nbsp;${offer.price}</button>
+      </li>`);
+    }).join(``);
 
     return (offersHtml === ``) ? offersHtml : `<ul class="trip-point__offers">${offersHtml}</ul>`;
   }
 
   get offersPrice() {
-    if (this._offersSelected.length === 0) {
+    if (this._offers.length === 0) {
       return 0;
     }
 
-    return this._offersSelected.reduce((acc, offer) => {
-      return {price: acc.price + offer.price};
+    return this._offers.reduce((acc, offer) => {
+      return {price: ((typeof acc.accepted === `undefined` || acc.accepted === true) ? acc.price : 0) + (offer.accepted ? offer.price : 0)};
     }).price;
   }
 
@@ -78,7 +79,7 @@ class Point extends BaseComponent {
     this._type = data.type;
     this._destinationPoint = data.destinationPoint;
     this._price = data.price;
-    this._offersSelected = data.offersSelected;
+    this._offers = data.offers;
   }
 }
 

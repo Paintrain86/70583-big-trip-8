@@ -1,16 +1,23 @@
 import utils from './util.js';
-import getObjects from './get-objects.js';
 import Filter from './filter.js';
 import Point from './point.js';
 import PointEdit from './point-edit.js';
 import Stats from './stats.js';
+import Request from './request.js';
 
-window.wayDestinations = [`Bologoe`, `Ulan-Ude`, `San-Francisco`, `Tyumen`, `Tegeran`];
+const END_POINT = `https://es8-demo-srv.appspot.com/big-trip`;
+const AUTHORIZATION = `Basic HalleLuYa=1`;
 
-const pointsCount = 10;
-const points = getObjects(pointsCount);
+const request = new Request({
+  endPoint: END_POINT,
+  auth: AUTHORIZATION
+});
 
-const initFilters = (onChange) => {
+const pageTitle = document.querySelector(`.trip__points`);
+
+const requestActionDelay = 700;
+
+const initFilters = (pointsArr, onChange) => {
   const filter = new Filter();
   const filterBlock = document.querySelector(`.trip-filter`);
 
@@ -19,13 +26,13 @@ const initFilters = (onChange) => {
 
     switch (value) {
       case `future`:
-        filteredPoints = points.filter((point) => point && Date.now() < point.timeStart.getTime());
+        filteredPoints = pointsArr.filter((point) => point && Date.now() < point.timeStart.getTime());
         break;
       case `past`:
-        filteredPoints = points.filter((point) => point && Date.now() >= point.timeStart.getTime());
+        filteredPoints = pointsArr.filter((point) => point && Date.now() >= point.timeStart.getTime());
         break;
       default:
-        filteredPoints = points;
+        filteredPoints = pointsArr;
     }
 
     onChange(filteredPoints);
@@ -38,14 +45,10 @@ const initFilters = (onChange) => {
 const renderPoints = (pointsArr) => {
   const pointsBlock = document.querySelector(`.trip-day__items`);
 
-  const renderSinglePoint = (index) => {
-    let object = pointsArr[index];
-
+  const renderSinglePoint = (object) => {
     if (!object) {
       return;
     }
-
-    object.destinationPoint = utils.getRandomFromArray(window.wayDestinations);
 
     const point = new Point(object);
     const pointEdit = new PointEdit(object);
@@ -63,49 +66,82 @@ const renderPoints = (pointsArr) => {
     };
 
     pointEdit.onDelete = () => {
-      pointsBlock.removeChild(pointEdit.element);
-      pointEdit.unrender();
-      pointsArr[index] = null;
+      request.deletePoint({
+        id: object.id
+      })
+      .then(() => {
+        setTimeout(function () {
+          pointsBlock.removeChild(pointEdit.element);
+          pointEdit.unrender();
+          object = null;
+        }, requestActionDelay);
+      });
     };
 
     pointEdit.onSubmit = (newObject) => {
-      point.update(updatePoint(newObject, index));
-      point.render();
-      pointsBlock.replaceChild(point.element, pointEdit.element);
-      pointEdit.unrender();
+      updateObject(newObject);
+
+      request.updatePoint({
+        id: object.id,
+        data: object.convertToServerFormat()
+      })
+      .then(updateObject)
+      .then((newPointObject) => {
+        setTimeout(function () {
+          point.update(newPointObject);
+          point.render();
+          pointsBlock.replaceChild(point.element, pointEdit.element);
+          pointEdit.unrender();
+        }, requestActionDelay);
+      })
+      .catch((err) => {
+        pointEdit._unblockForm(err);
+      });
     };
 
     pointsBlock.appendChild(point.render());
   };
 
-  const updatePoint = (newObject, i) => {
-    pointsArr[i] = Object.assign({}, pointsArr[i], newObject);
+  const updateObject = (newObject) => {
+    let object = pointsArr.filter((item) => item.id === newObject.id)[0];
 
-    return pointsArr[i];
+    object = Object.assign({}, object, newObject);
+
+    return object;
   };
 
   pointsBlock.innerHTML = ``;
 
-  for (let i = 0; i < pointsArr.length; i++) {
-    renderSinglePoint(i);
+  for (let point of pointsArr) {
+    renderSinglePoint(point);
   }
 };
 
-const setPageTitle = () => {
-  const title = document.querySelector(`.trip__points`);
+const setDestinations = (items) => {
+  window.wayDestinations = items;
+};
+
+const setOfferTypes = (items) => {
+  window.offerTypes = items;
+};
+
+const setDestinationsTitle = (points) => {
+  const destinations = new Set();
+
+  points.forEach((item) => destinations.add(item.destinationPoint));
 
   const getNewTitleHtml = () => {
-    return window.wayDestinations.map((dest, i) => {
+    return [...destinations].map((dest, i) => {
       return (i === 0) ? `${dest}` : `&nbsp;&mdash; ${dest}`;
     }).join(``);
   };
 
   const newTitleHtml = `<h1 class="trip__points">${getNewTitleHtml()}</h1>`;
 
-  title.parentNode.replaceChild(utils.createElement(newTitleHtml), title);
+  pageTitle.parentNode.replaceChild(utils.createElement(newTitleHtml), pageTitle);
 };
 
-const initStatistics = () => {
+const initStatistics = (points) => {
   const buttons = document.querySelectorAll(`.view-switch__item`);
   const activeBtn = document.querySelector(`.view-switch__item--active`);
   const stat = new Stats();
@@ -153,7 +189,21 @@ const initStatistics = () => {
   setView(activeBtn);
 };
 
-setPageTitle();
-initFilters(renderPoints);
-renderPoints(points);
-initStatistics();
+pageTitle.textContent = `Loading routes...`;
+request.getPoints()
+  .then((points) => {
+    setDestinationsTitle(points);
+    renderPoints(points);
+    initFilters(points, renderPoints);
+    initStatistics(points);
+  });
+
+request.getDestinations()
+  .then((destinations) => {
+    setDestinations(destinations);
+  });
+
+request.getOfferTypes()
+  .then((offers) => {
+    setOfferTypes(offers);
+  });
