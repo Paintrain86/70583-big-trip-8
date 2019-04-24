@@ -48,6 +48,8 @@ class ModelPoint {
   update(data) {
     this.type = data.type;
     this.destinationPoint = data.destinationPoint;
+    this.timeStart = data.timeStart;
+    this.timeEnd = data.timeEnd;
     this.sights = data.sights;
     this.pictures = data.pictures;
     this.price = data.price;

@@ -104,14 +104,6 @@ const renderPoints = (pointsArr) => {
     pointsBlock.appendChild(point.render());
   };
 
-  const updateObject = (newObject) => {
-    let object = pointsArr.filter((item) => item.id === newObject.id)[0];
-
-    object = Object.assign({}, object, newObject);
-
-    return object;
-  };
-
   pointsBlock.innerHTML = ``;
 
   for (let point of pointsArr) {

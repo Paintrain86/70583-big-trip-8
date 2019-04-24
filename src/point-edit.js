@@ -26,6 +26,9 @@ class PointEdit extends BaseComponent {
     this._submitBtn = null;
     this._resetBtn = null;
 
+    this._timeStartElem = null;
+    this._timeEndElem = null;
+
     this._onSubmit = null;
     this._onReset = null;
     this._onDelete = null;
@@ -158,6 +161,8 @@ class PointEdit extends BaseComponent {
     return {
       id: this._id,
       type: formData.get(`travel-way`),
+      timeStart: new Date(formData.get(`date-start`)),
+      timeEnd: new Date(formData.get(`date-end`)),
       destinationPoint: formData.get(`destination`),
       sights: (this._tempDestination) ? this._tempDestination.description : this._sights,
       pictures: (this._tempDestination) ? this._tempDestination.pictures : this._pictures,
@@ -330,8 +335,8 @@ class PointEdit extends BaseComponent {
 
     document.body.addEventListener(`keyup`, this._onEscapePressed);
 
-    flatpickr(this._element.querySelector(`.point__time [name="date-start"]`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeStart});
-    flatpickr(this._element.querySelector(`.point__time [name="date-end"]`), {enableTime: true, noCalendar: true, altInput: true, altFormat: `h:i K`, dateFormat: `H:i`, defaultDate: this._timeEnd});
+    this._timeStartElem = flatpickr(this._element.querySelector(`.point__time [name="date-start"]`), {enableTime: true, noCalendar: false, altInput: true, altFormat: `h:i K`, dateFormat: `Z`, defaultDate: this._timeStart});
+    this._timeEndElem = flatpickr(this._element.querySelector(`.point__time [name="date-end"]`), {enableTime: true, noCalendar: false, altInput: true, altFormat: `h:i K`, dateFormat: `Z`, defaultDate: this._timeEnd});
   }
 
   unbind() {
@@ -341,11 +346,16 @@ class PointEdit extends BaseComponent {
     this._element.querySelector(`#destination`).removeEventListener(`change`, this._onChangeDestination);
 
     document.body.removeEventListener(`keyup`, this._onEscapePressed);
+
+    this._timeStartElem.destroy();
+    this._timeEndElem.destroy();
   }
 
   update(data) {
     this._type = data.type;
     this._destinationPoint = data.destinationPoint;
+    this._timeStart = data.timeStart;
+    this._timeEnd = data.timeEnd;
     this._sights = data.sights;
     this._pictures = data.pictures;
     this._price = data.price;

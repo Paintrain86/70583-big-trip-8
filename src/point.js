@@ -78,6 +78,8 @@ class Point extends BaseComponent {
   update(data) {
     this._type = data.type;
     this._destinationPoint = data.destinationPoint;
+    this._timeStart = data.timeStart;
+    this._timeEnd = data.timeEnd;
     this._price = data.price;
     this._offers = data.offers;
   }
